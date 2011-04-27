@@ -71,13 +71,11 @@ wc ca = do
   return $ read s
 
 runningTotals :: [Total] -> (Author,Date,Int) -> [Total]
-runningTotals totals (author,date,wc) = (date,author,new):totals
+runningTotals []     (author,date,wc) = [(date,author,f Map.empty)]
+runningTotals totals (author,date,wc) = (date,author,f old):totals
   where
-    new = Map.insertWith (+) author wc $ (\(a,b,c)->c) $ head totals
-
-zeroTotals :: [Total]
-zeroTotals = [(rTime "Tue Jun 1 00:00:00 2009 +0000","ekate",Map.empty)]
--- FIXME
+    f = Map.insertWith (+) author wc
+    old = (\(a,b,c)->c) $ head totals
 
 printHeader :: FilePath -> String -> [Author] -> IO ()
 printHeader output title authors = 
@@ -124,7 +122,7 @@ main = do
     Right cas -> do
       wcs <- mapM wc cas
       runIO $ "git checkout master"
-      let totals = foldl runningTotals zeroTotals . reverse 
+      let totals = foldl runningTotals [] . reverse 
                  . zip3 (map author cas) (map date cas) 
                  . map (max 0) 
                  $ zipWith (-) wcs (tail wcs ++ [head $ reverse wcs])
