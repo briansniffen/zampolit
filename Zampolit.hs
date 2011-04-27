@@ -22,6 +22,7 @@ import Data.List
 import Data.Map (Map,(!))
 import qualified Data.Map as Map
 import Data.Maybe
+import Data.String.Utils
 
 type Commit = String
 type Author = String
@@ -39,6 +40,7 @@ data CA = CA { commit :: Commit
 type Total = (Date,Author,Map Author Int)
 
 foldNames "bts" = "brians"
+foldNames "Paul Weaver" = "pweaver"
 foldNames a = a
 
 parseCA :: Parser [CA]
@@ -47,9 +49,9 @@ parseCA = many1 $ do
   c <- count 40 hexDigit
   newline
   string "Author: "
-  a' <- many1 alphaNum
-  let a = foldNames a'
-  space
+  a' <- many1 (noneOf "<")
+  let a = foldNames $ strip a'
+  -- space
   between (char '<') (char '>') $ many (noneOf ">")
   newline
   string "Date:   "
@@ -63,8 +65,8 @@ fTime = formatTime defaultTimeLocale "%s" -- "%m/%d/%y %I:%M:%S %P"
 
 wc ca = do
   runIO $ "git checkout " ++ commit ca
-  s <- run $ "find . -name \\*tex -print -o -name \\*txt -print" 
-      -|- "xargs wc -w"
+  s <- run $ "find . -name \\*tex -print0 -o -name \\*txt -print0" 
+      -|- "xargs -0 wc -w"
       -|- "tail -1" -|- "grep -o '[0-9]\\+'"
   return $ read s
 
@@ -74,7 +76,8 @@ runningTotals totals (author,date,wc) = (date,author,new):totals
     new = Map.insertWith (+) author wc $ (\(a,b,c)->c) $ head totals
 
 zeroTotals :: [Total]
-zeroTotals = [(rTime "Tue Jun 1 00:00:00 2010 +0000","ekate",Map.empty)]
+zeroTotals = [(rTime "Tue Jun 1 00:00:00 2009 +0000","ekate",Map.empty)]
+-- FIXME
 
 printHeader :: FilePath -> String -> [Author] -> IO ()
 printHeader output title authors = 
