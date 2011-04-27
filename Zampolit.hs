@@ -51,7 +51,6 @@ parseCA = many1 $ do
   string "Author: "
   a' <- many1 (noneOf "<")
   let a = foldNames $ strip a'
-  -- space
   between (char '<') (char '>') $ many (noneOf ">")
   newline
   string "Date:   "
@@ -61,7 +60,7 @@ parseCA = many1 $ do
   return CA {commit = c, author = a, date = d}
 
 rTime = readTime defaultTimeLocale "%a %b %e %T %Y %Z"
-fTime = formatTime defaultTimeLocale "%s" -- "%m/%d/%y %I:%M:%S %P"
+fTime = formatTime defaultTimeLocale "%s" 
 
 wc ca = do
   runIO $ "git checkout " ++ commit ca
