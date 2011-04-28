@@ -19,7 +19,7 @@ Executable zampolit
   Main-is:             Zampolit.hs
   
   -- Packages needed in order to build this package.
-  Build-depends:       base<5,parsec,cmdargs,time,containers,old-locale,directory,filepath,HSH
+  Build-depends:       base<5,parsec,cmdargs,time,containers,old-locale,directory,filepath,HSH,MissingH
   
   -- Modules not exported by this package.
   -- Other-modules:       
