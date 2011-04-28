@@ -70,11 +70,14 @@ wc ca = do
   return $ read s
 
 runningTotals :: [Total] -> (Author,Date,Int) -> [Total]
-runningTotals []     (author,date,wc) = [(date,author,f Map.empty)]
-runningTotals totals (author,date,wc) = (date,author,f old):totals
+runningTotals totals (author,date,wc) = new:totals
   where
+    new = (date,author,case totals of
+                            [] -> f Map.empty
+                            other -> f old)
     f = Map.insertWith (+) author wc
     old = (\(a,b,c)->c) $ head totals
+
 
 printHeader :: FilePath -> String -> [Author] -> IO ()
 printHeader output title authors = 
