@@ -11,7 +11,7 @@ Copyright:           Copyright (c) 2011 Brian Sniffen
 Category:            Text
 Build-type:          Simple
 Extra-source-files:  README
-Cabal-version:       >=1.2
+Cabal-version:       >=1.6
 
 
 Executable zampolit

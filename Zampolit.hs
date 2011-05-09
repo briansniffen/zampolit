@@ -115,6 +115,7 @@ main = do
   let cmd = Cmd { outfile = def &= argPos 1 &= opt (dir ++ "-wc") &= typFile 
                 , gameName = def &= argPos 0 &= opt dir &= typ "NAME"}
             &= program "zampolit"
+            &= summary "zampolit v0.3, (c) Brian Snffen 2011"
   c <- cmdArgs cmd
   let title = gameName c
       output = outfile c
