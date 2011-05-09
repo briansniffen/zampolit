@@ -1,0 +1,24 @@
+## Zampolit
+## Copyright (c) 2011 Brian Sniffen
+
+To run [`Zampolit`](http://hackage.haskell.org/package/zampolit) and
+collect the data for these pretty graphs, you need a few things:
+
+* The version control system `git`, with its svn extensions.  
+* Gnuplot.
+* Haskell.
+
+Athena and all modern operating systems have the first two, either
+installed by default or in a locker or easily installed package.
+But Haskell's more of a pain.  You can [download
+it](http://hackage.haskell.org/platform/), then run:
+
+    cabal update
+    cabal install zampolit
+    git svn clone PATH/TO/YOUR/GAME # replace this
+    cd YOUR/GAME
+    zampolit
+
+It will churn for a while through the entire history of your game,
+then deposit `GAME-wc.data` and `GAME-wc.gnuplot`.  If you have Gnuplot
+installed, it will even run gnuplot for you to produce `GAME-wc.pdf`.
