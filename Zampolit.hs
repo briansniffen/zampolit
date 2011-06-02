@@ -64,7 +64,7 @@ fTime = formatTime defaultTimeLocale "%s"
 
 wc ca = do
   runIO $ "git checkout " ++ commit ca
-  s <- run $ "find . -name \\*tex -print0 -o -name \\*txt -print0" 
+  s <- run $ "find . -name \\*tex -print0 -o -name \\*txt -print0 -o -name \\*yaml -print0" 
       -|- "xargs -0 wc -w"
       -|- "tail -1" -|- "grep -o '[0-9]\\+'"
   return $ read s
