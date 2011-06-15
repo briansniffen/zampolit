@@ -64,7 +64,7 @@ fTime = formatTime defaultTimeLocale "%s"
 
 wc ca = do
   runIO $ "git checkout " ++ commit ca
-  s <- run $ "find . -name \\*tex -print0 -o -name \\*txt -print0" 
+  s <- run $ "find . -name \\*tex -print0 -o -name \\*txt -print0 -o -name \\*yaml -print0" 
       -|- "xargs -0 wc -w"
       -|- "tail -1" -|- "grep -o '[0-9]\\+'"
   return $ read s
@@ -85,8 +85,8 @@ printHeader output title authors =
     hPutStrLn h "set xdata time"
     hPutStrLn h "set timefmt \"%s\""
     hPutStrLn h "set format x \"%m/%d\""
-    hPutStrLn h "set terminal pdf size 10in,7.5in"
-    hPutStrLn h $ "set output \"" ++ output ++ ".pdf\""
+    hPutStrLn h "set terminal postscript enhanced color size 10in,7.5in"
+    hPutStrLn h $ "set output '| ps2pdf - " ++ output ++ ".pdf'"
     hPutStrLn h "set xlabel \"date\""
     hPutStrLn h "set ylabel \"words\""
     hPutStrLn h $ "set title \"" ++ title ++ " word counts by author\""
