@@ -16,7 +16,7 @@ Cabal-version:       >=1.6
 
 Executable zampolit
   Main-is:             Zampolit.hs
-  Build-depends:       base<5,parsec,cmdargs,time,containers,old-locale,directory,filepath,HSH,MissingH
+  Build-depends:       base<5,parsec>=2,cmdargs,time,containers,old-locale,directory,filepath,HSH,MissingH
 
 source-repository head
   type:		git
