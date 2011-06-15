@@ -19,6 +19,7 @@ import Data.Time.Format
 
 import Data.Function
 import Data.List
+import Data.List.Utils
 import Data.Map (Map,(!))
 import qualified Data.Map as Map
 import Data.Maybe
@@ -29,7 +30,9 @@ type Author = String
 type Date = UTCTime
 
 data Cmd = Cmd {outfile :: FilePath,
-                gameName :: String}
+                gameName :: String,
+                extensions :: [String],
+                namefold :: FilePath}
            deriving (Show,Data,Typeable)
                       
 
@@ -39,18 +42,16 @@ data CA = CA { commit :: Commit
 
 type Total = (Date,Author,Map Author Int)
 
-foldNames "bts" = "brians"
-foldNames "Paul Weaver" = "pweaver"
-foldNames a = a
-
-parseCA :: Parser [CA]
-parseCA = many1 $ do
+foldNames namesAL name = maybe name id $ lookup name namesAL
+                  
+parseCA :: [(String,String)] -> Parser [CA]
+parseCA namesAL = many1 $ do
   string "commit "
   c <- count 40 hexDigit
   newline
   string "Author: "
   a' <- many1 (noneOf "<")
-  let a = foldNames $ strip a'
+  let a = (foldNames namesAL) $ strip a'
   between (char '<') (char '>') $ many (noneOf ">")
   newline
   string "Date:   "
@@ -62,12 +63,16 @@ parseCA = many1 $ do
 rTime = readTime defaultTimeLocale "%a %b %e %T %Y %Z"
 fTime = formatTime defaultTimeLocale "%s" 
 
-wc ca = do
+wc cmd ca = do
   runIO $ "git checkout " ++ commit ca
-  s <- run $ "find . -name \\*tex -print0 -o -name \\*txt -print0 -o -name \\*yaml -print0" 
+  s <- run $ ( "find . -type f " ++ namematches ++ " -print0" )
       -|- "xargs -0 wc -w"
       -|- "tail -1" -|- "grep -o '[0-9]\\+'"
   return $ read s
+  where 
+    namematches = case extensions cmd of
+      [] -> ""
+      e  -> "\\( " ++ (intercalate " -o " . map ("-name \\*"++) $ e) ++ " \\)"
 
 runningTotals :: [Total] -> (Author,Date,Int) -> [Total]
 runningTotals totals (author,date,wc) = new:totals
@@ -113,21 +118,28 @@ main :: IO ()
 main = do
   dir <- return . takeFileName =<< getCurrentDirectory
   let cmd = Cmd { outfile = def &= argPos 1 &= opt (dir ++ "-wc") &= typFile 
-                , gameName = def &= argPos 0 &= opt dir &= typ "NAME"}
+                , gameName = def &= argPos 0 &= opt dir &= typ "NAME"
+                , extensions = [".tex",".txt"] &= typ "EXTENSIONS"
+                , namefold = ".namefold" &= typFile
+                }
             &= program "zampolit"
             &= summary "zampolit v0.3, (c) Brian Snffen 2011"
   c <- cmdArgs cmd
+  namefoldC <- readFile $ namefold c
   let title = gameName c
       output = outfile c
+      namesAL = strToAL namefoldC
   cas <- run $ "git log" -|- "grep '^\\(commit\\|Auth\\|Date\\)'"
-  case parse parseCA "" cas of 
+  case parse (parseCA namesAL) "" cas of 
     Left err -> print err
     Right cas -> do
-      wcs <- mapM wc cas
-      runIO $ "git checkout master"
+--      wcs <- mapM wc (reverse cas) --flip
+      wcs <- mapM (wc cmd) cas
+      runIO $ "git checkout master" 
       let totals = foldl runningTotals [] . reverse 
                  . zip3 (map author cas) (map date cas) 
-                 . map (max 0) 
+--                 . map ((0-))  --flip
+                 . map (max 0)
                  $ zipWith (-) wcs (tail wcs ++ [head $ reverse wcs])
           (_,_,mp) = head totals
           authors = sortBy (\x y -> compare (mp ! y) (mp ! x)) $ Map.keys mp

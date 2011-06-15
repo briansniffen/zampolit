@@ -10,7 +10,7 @@ Homepage:            https://github.com/briansniffen/zampolit
 Copyright:           Copyright (c) 2011 Brian Sniffen
 Category:            Text
 Build-type:          Simple
-Extra-source-files:  README
+Extra-source-files:  README, dot.namefold
 Cabal-version:       >=1.6
 
 
