@@ -133,12 +133,10 @@ main = do
   case parse (parseCA namesAL) "" cas of 
     Left err -> print err
     Right cas -> do
---      wcs <- mapM wc (reverse cas) --flip
-      wcs <- mapM (wc cmd) cas
+      wcs <- mapM (wc c) cas
       runIO $ "git checkout master" 
       let totals = foldl runningTotals [] . reverse 
                  . zip3 (map author cas) (map date cas) 
---                 . map ((0-))  --flip
                  . map (max 0)
                  $ zipWith (-) wcs (tail wcs ++ [head $ reverse wcs])
           (_,_,mp) = head totals

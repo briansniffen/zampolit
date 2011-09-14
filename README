@@ -22,3 +22,19 @@ it](http://hackage.haskell.org/platform/), then run:
 It will churn for a while through the entire history of your game,
 then deposit `GAME-wc.data` and `GAME-wc.gnuplot`.  If you have Gnuplot
 installed, it will even run gnuplot for you to produce `GAME-wc.pdf`.
+
+Some games have authors who write under several names.  For example, I
+committed to "Fistful of Promises" under the username `brians` and the
+name `bts`.  So in that game's top level directory, I create a file
+`.namefold`, in which I put the single line:
+
+    "bts","brians"
+
+Then everything committed by `bts` is rewritten to be from `brians`.
+For Harry Potter: Year 7, Paul committed under two names.  For him we
+write:
+
+    "Paul Weaver","pweaver"
+
+The sample file `dot.namefold` is an example of how to do this.
+
