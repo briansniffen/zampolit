@@ -1,49 +1,49 @@
-{-# Language DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module Main where
 
-import HSH hiding (space)
+import           HSH                    hiding (space)
 
-import Text.Parsec
-import Text.Parsec.Char
-import Text.Parsec.String
+import           Text.Parsec
+import           Text.Parsec.Char
+import           Text.Parsec.String
 
-import System.Console.CmdArgs
-import System.FilePath (takeFileName)
-import System.Directory (getCurrentDirectory)
+import           System.Console.CmdArgs
+import           System.Directory       (getCurrentDirectory)
+import           System.FilePath        (takeFileName)
 
-import System.Locale
-import System.IO
-import Data.Time
-import Data.Time.Format
+import           Data.Time
+import           Data.Time.Format
+import           System.IO
+import           System.Locale          hiding (defaultTimeLocale)
 
-import Data.Function
-import Data.List
-import Data.List.Utils
-import Data.Map (Map,(!))
-import qualified Data.Map as Map
-import Data.Maybe
-import Data.String.Utils
+import           Data.Function
+import           Data.List
+import           Data.List.Utils
+import           Data.Map               (Map, (!))
+import qualified Data.Map               as Map
+import           Data.Maybe
+import           Data.String.Utils
 
 type Commit = String
 type Author = String
 type Date = UTCTime
 
-data Cmd = Cmd {outfile :: FilePath,
-                gameName :: String,
+data Cmd = Cmd {outfile    :: FilePath,
+                gameName   :: String,
                 extensions :: [String],
-                namefold :: FilePath}
+                namefold   :: FilePath}
            deriving (Show,Data,Typeable)
-                      
+
 
 data CA = CA { commit :: Commit
-             , date :: Date
+             , date   :: Date
              , author :: Author }
 
 type Total = (Date,Author,Map Author Int)
 
 foldNames namesAL name = maybe name id $ lookup name namesAL
-                  
+
 parseCA :: [(String,String)] -> Parser [CA]
 parseCA namesAL = many1 $ do
   string "commit "
@@ -60,8 +60,8 @@ parseCA namesAL = many1 $ do
   newline
   return CA {commit = c, author = a, date = d}
 
-rTime = readTime defaultTimeLocale "%a %b %e %T %Y %Z"
-fTime = formatTime defaultTimeLocale "%s" 
+rTime = parseTimeOrError True defaultTimeLocale "%a %b %e %T %Y %Z"
+fTime = formatTime defaultTimeLocale "%s"
 
 wc cmd ca = do
   runIO $ "git checkout " ++ commit ca
@@ -69,7 +69,7 @@ wc cmd ca = do
       -|- "xargs -0 wc -w"
       -|- "tail -1" -|- "grep -o '[0-9]\\+'"
   return $ read s
-  where 
+  where
     namematches = case extensions cmd of
       [] -> ""
       e  -> "\\( " ++ (intercalate " -o " . map ("-name \\*"++) $ e) ++ " \\)"
@@ -85,7 +85,7 @@ runningTotals totals (author,date,wc) = new:totals
 
 
 printHeader :: FilePath -> String -> [Author] -> IO ()
-printHeader output title authors = 
+printHeader output title authors =
   withFile (output ++ ".gnuplot") WriteMode (\h -> do
     hPutStrLn h "set xdata time"
     hPutStrLn h "set timefmt \"%s\""
@@ -99,8 +99,8 @@ printHeader output title authors =
     hPutStr   h "plot "
     hPutStrLn h . intercalate ", " . map plotLine $ zip [2..] authors)
       where
-        plotLine (n,a) = "'" ++ output ++ ".data' using 1:($" 
-                         ++ show n ++ ") title \"" ++ a ++ "\""    
+        plotLine (n,a) = "'" ++ output ++ ".data' using 1:($"
+                         ++ show n ++ ") title \"" ++ a ++ "\""
 
 printRow :: Handle -> [Author] -> Total -> IO ()
 printRow h authors (date,name,total) = do
@@ -117,7 +117,7 @@ printRow h authors (date,name,total) = do
 main :: IO ()
 main = do
   dir <- return . takeFileName =<< getCurrentDirectory
-  let cmd = Cmd { outfile = def &= argPos 1 &= opt (dir ++ "-wc") &= typFile 
+  let cmd = Cmd { outfile = def &= argPos 1 &= opt (dir ++ "-wc") &= typFile
                 , gameName = def &= argPos 0 &= opt dir &= typ "NAME"
                 , extensions = [".tex",".txt"] &= typ "EXTENSIONS"
                 , namefold = ".namefold" &= typFile
@@ -130,13 +130,13 @@ main = do
       output = outfile c
       namesAL = strToAL namefoldC
   cas <- run $ "git log" -|- "grep '^\\(commit\\|Auth\\|Date\\)'"
-  case parse (parseCA namesAL) "" cas of 
+  case parse (parseCA namesAL) "" cas of
     Left err -> print err
     Right cas -> do
       wcs <- mapM (wc c) cas
-      runIO $ "git checkout master" 
-      let totals = foldl runningTotals [] . reverse 
-                 . zip3 (map author cas) (map date cas) 
+      runIO $ "git checkout master"
+      let totals = foldl runningTotals [] . reverse
+                 . zip3 (map author cas) (map date cas)
                  . map (max 0)
                  $ zipWith (-) wcs (tail wcs ++ [head $ reverse wcs])
           (_,_,mp) = head totals
